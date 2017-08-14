@@ -1,2 +1,2 @@
 # Mini_search_engine
-Visualizing important links
+Visualizing important linksin a web page
