@@ -15,20 +15,12 @@ def clean_url(web_site, ctx): # returns HTTP object
 			req = Request('https://'+web_site, headers=headers)
 			doc = urlopen(req, context=ctx)
 		except:
-			try:
-				req = Request("https://" + "www." +web_site, headers=headers)
-				doc = urlopen(req, context=ctx)
-			except:
 				try:
 					req = Request('http://'+web_site, headers=headers)
 					doc = urlopen(req, context=ctx)
-				except:
-					try:
-						req = Request('http://'+'www.' + web_site, headers=headers)
-						doc = urlopen(req,context=ctx)
-					except URLError as error:
-						print('Unable to retrive ', error)
-						sys.exit(0)
+				except URLError as error:
+					print('Unable to retrive ', error)
+					sys.exit(0)
 	else:
 		try:
 			req = Request(web_site, headers=headers)
@@ -36,8 +28,9 @@ def clean_url(web_site, ctx): # returns HTTP object
 		except URLError as error:
 			print ('Unable to retrieve ', error)
 			sys.exit(0)
-	if len(doc.read()) == 0:
+	html = doc.read()
+	if len(html) == 0:
 		print ('Unable to retrive, empty page or wrong host')
 		sys.exit(0)
 	else:
-		return doc
+		return html

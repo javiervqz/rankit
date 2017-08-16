@@ -38,10 +38,19 @@ to_id INTEGER
 
 #Cleaning input url
 web_site = input('Type webpage to crawl\n')
-site_page = lcode.clean_url(web_site, ctx) #urllib HTTPResponse Object
+site_page = lcode.clean_url(web_site, ctx) #Returns html/text
+
+#find "likness"
+pos = web_site.rfind('.')
+clean = web_site[:pos]
+pos = clean.rfind('www.')
+if pos != -1: clean = clean[pos+4:]
+pos = clean.rfind('//')
+if pos != -1: clean = clean[pos+2:]
+
 
 #Checking crawling status
-cur.execute('SELECT * FROM Websites WHERE url = ?', (web_site,))
+cur.execute('''SELECT * FROM Websites WHERE url LIKE ?  ''', ('%'+clean+'%',))
 row = cur.fetchone()
 if row is None:
 	cur.execute('''
