@@ -1,9 +1,14 @@
 #Initialize libraries
 import sqlite3
-from urllib.request import urlopen
-from urllib.error import URLError
-import sys
+import ssl
+import lesscode_lib as lcode
 #End Libraries
+
+#ssl is anoying, ignore it
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode=ssl.CERT_NONE
+
 
 
 conn = sqlite3.connect('Crawled.DB')
@@ -31,44 +36,28 @@ to_id INTEGER
 )
 ''')
 
-
+#Cleaning input url
 web_site = input('Type webpage to crawl\n')
-if (web_site.endswith('/') ) : web_site = web_site[:-1]
-if ( web_site.endswith('.htm') or web_site.endswith('.html') ) :
-	pos = web_site.rfind('/')
-	web_site = web_site[:pos]
-if not web_site.startswith('http://') or web_site.startswith('https://'):
-	try:
-		web_site = 'http://'+web_site
-		doc = urlopen(web_site)
-	except:
-		try:
-			web_site = 'http://www.'+web_site[7:]
-			doc = urlopen(web_site)
-		except URLError as doc:
-			print ('Not Found\t',doc)
-			sys.exit(0)
+site_page = lcode.clean_url(web_site, ctx) #urllib HTTPResponse Object
 
-
+#Checking crawling status
 cur.execute('SELECT * FROM Websites WHERE url = ?', (web_site,))
 row = cur.fetchone()
 if row is None:
 	cur.execute('''
-	INSERT INTO Websites (url) VALUES ( ? )
-	''',(web_site,))
-
-else:
+	INSERT OR IGNORE INTO Websites (url) VALUES ( ? )
+	''', (web_site,)   )
 	cur.execute('''
-	SELECT id,url FROM Pages WHERE html IS NULL and error is NULL
-	ORDER BY RANDOM() LIMIT 1''')
-	row = cur.fetchone()
-	if row is not None:
-		print ('Restarting existing crawl')
-	else:
-		cur.execute('''
-		INSERT INTO Pages (url, html, new_rank) VALUES (?,NULL,1.0)''',
-		(web_site,))
+	INSERT OR IGNORE INTO Pages (url, html, new_rank) VALUES (?,NULL,1.0)
+	''', (web_site,)    )
+	conn.commit()
+else:
+	print ('Restarting existing crawl\n')
 
+cur.execute('SELECT url FROM Websites')
+webs = []
+for row in cur:
+	webs.append(str(row[0]))
+print(webs)
 
-conn.commit()
 cur.close()
