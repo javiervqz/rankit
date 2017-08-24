@@ -35,7 +35,7 @@ url TEXT UNIQUE
 
 CREATE TABLE IF NOT EXISTS Links(
 from_id INTEGER,
-to_id INTEGER UNIQUE
+to_id INTEGER
 )
 ''')
 
@@ -75,20 +75,20 @@ print(webs)
 
 many = 0
 while True:
-	if (many < 1):
+	if (many == 0):
 		scal = input('How many pages: ')
 		if (len(scal) < 1): break
 		many = int(scal)
 	many -= 1
 #Verifying if url was gathered already
 	cur.execute('''SELECT id,url FROM Pages WHERE html IS NULL AND error is NULL
-	ORDER BY RANDOM() LIMIT 1 ''')
+	AND url LIKE ? ORDER BY RANDOM() LIMIT 1 ''', ('%'+clean+'%',))
 	try:
 		row = cur.fetchone()
 		fromid = row[0]
 		url = row[1]
 	except:
-		print('No unretrieve HTML pages found')
+		print('\033[1m'+'No unretrieve HTML pages found'+'\033[0m')
 		many = 0
 		break
 	print(fromid, url, end=' ')
@@ -96,21 +96,26 @@ while True:
 	try:
 		cur.execute('DELETE FROM Links WHERE from_id = ?',(fromid,))
 		html = site_page.read()
+		html = html.strip()
+		if (len(html) == 0):
+			site_page, url = lcode.clean_url(url,ctx)
+			html = site_page.read()
+			html = html.strip()
 		if site_page.getcode() != 200:
 			print('Error on page', site_page.getcode())
 			cur.execute('UPDATE Pages SET error=? WHERE url=?',
 					(site_page.getcode(), url))
 		if 'text/html' != site_page.info().get_content_type():
-			print('Ignore non text/html page')
+			print('\033[1m'+'Ignore non text/html page'+'\033[0m')
 			cur.execute('DELETE FROM Pages WHERE url=?',(url,))
 			continue
 		soup = BeautifulSoup(html, 'html.parser')
 		print('Characters ('+str(len(html))+')', end =' ')
 	except KeyboardInterrupt:
-		print('Interrupted')
+		print('\033[1m'+'Interrupted'+'\033[0m')
 		break
 	except:
-		print('Unable to retrieve or parse')
+		print('\033[1m'+'Unable to retrieve or parse'+'\033[0m')
 		cur.execute('UPDATE Pages SET error=-1 WHERE url=?',(url, ))
 		conn.commit()
 		continue
@@ -125,23 +130,32 @@ while True:
 #Retrieving new urls
 	tags = soup('a')
 	count = 0
+	i = 0
 	for tag in tags:
 		href = tag.get('href', None)
 		if (href is None): continue
 	#Solve weird references like href'/facultad/2017'
+		href = href.strip()
 		up = urlparse(href)
 		if (len(up.scheme)<1):
 			href=urljoin(url,href)
 		ipos = href.find('#')
 		if(ipos>1):href = href[:pos]
 		if (href.endswith('/')): href = href[:-1]
-		print (href)
+		#print (href)
+
+		found = False
+		for web in webs:
+			if (href.startswith(web)):
+				found = True
+				break
+		if not found: continue
 
 
 
 
 		cur.execute('''
-		INSERT OR IGNORE INTO Pages (url, html, new_rank) VALUES (?,NULL,1.0)''',
+		INSERT OR IGNORE INTO Pages (url,html,new_rank) VALUES (?,NULL,1.0)''',
 		(href, ))
 		count += 1
 		conn.commit()
@@ -151,7 +165,7 @@ while True:
 			row = cur.fetchone()
 			toid=row[0]
 		except:
-			print('Could not retrieve ID')
+			print('\033[1m'+'Could not retrieve ID'+'\033[0m')
 			continue
 		cur.execute('INSERT OR IGNORE INTO Links (from_id, to_id) VALUES (?,?)',
 					(fromid, toid))
