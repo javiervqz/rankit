@@ -3,12 +3,13 @@ from urllib.error import URLError
 import sys
 
 def clean_url(web_site, ctx): # returns HTTP object
-	headers = {'User-Agent':'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:54.0) Gecko/20100101 Firefox/54.0'}
+	headers = { 'User-Agent':'''Mozilla/5.0 (X11; Ubuntu; Linux x86_64;rv:54.0)
+	 Gecko/20100101 Firefox/54.0'''} #Fool simple security I'm not a bot
 
-	if (web_site.endswith('/') ) :
-		web_site = web_site[:-1]
-	if ( web_site.endswith('.htm') or web_site.endswith('.html') ) :
-		pos = web_site.rfind('/')
+	if (web_site.endswith('/') ) :#fing.uach.mx/
+		web_site = web_site[:-1] #fing.uach.mx
+	if ( web_site.endswith('.htm') or web_site.endswith('.html') ) : #fing.uach.mx/ingenieria.html
+		pos = web_site.rfind('/') #fing.uach.mx
 		web_site = web_site[:pos]
 	if not (web_site.startswith('http://') or web_site.startswith('https://')):
 		try:
