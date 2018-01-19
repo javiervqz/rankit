@@ -1,47 +1,68 @@
-from html.parser import HTMLParser
-from urllib.request import urlopen
-from urllib import parse
+from urllib.request import urlopen, Request
+from urllib.parse import urlparse, urljoin
+from urllib.error import URLError
+import ssl
+import sys
+from bs4 import BeautifulSoup
 
-class LinkParser(HTMLParser):
+class LinkParser:
+	def __init__(self):
+		self.headers = { 'User-Agent':'''Mozilla/5.0 (X11; Ubuntu; Linux x86_64;rv:54.0) Gecko/20100101 Firefox/54.0'''} #Fool simple security I'm not a bot
+		self.ctx = ssl.create_default_context()
+		self.ctx.check_hostname = False
+		self.ctx.verify_mode=ssl.CERT_NONE
+		self.url = ''
 
-	def handle_starttag(self, tag, attrs):
-		if tag == 'a':
-			for (key, value) in attrs:
-				if key == 'hrfef':
-					newUrl = parse.urljoin(self.baseUrl, value)
-					self.links = self.links + [newUrl]
 
-	def getLinks (self, url):
-		self.links = []
-		self.baseUrl = url
-		response = urlopen(url)
-		if response.getheader('Content-Type') == 'text/html':
-			htmlBytes = response.read()
-			htmlString = htmlBytes.decode('utf-8')
-			self.feed (htmlString)
-			return htmlString, self.links
+	def CleanUrl(self, web_site): # returns html page and usable url
+
+		if (web_site.endswith('/') ) :#fing.uach.mx/
+			web_site = web_site[:-1] #fing.uach.mx
+		if ( web_site.endswith('.htm') or web_site.endswith('.html') ) : #fing.uach.mx/ingenieria.html
+			pos = web_site.rfind('/') #fing.uach.mx
+			web_site = web_site[:pos]
+		if not (web_site.startswith('http://') or web_site.startswith('https://')):
+			try:
+				req = Request('https://'+web_site, headers=self.headers)
+				doc = urlopen(req, context=self.ctx)
+				self.url = 'https://'+web_site
+			except:
+					try:
+						req = Request('http://'+web_site, headers=self.headers)
+						doc = urlopen(req, context=self.ctx)
+						self.url = 'http://'+web_site
+					except URLError as error:
+						print('Unable to retrive ', error)
+						sys.exit(0)
 		else:
-			return "", []
+			try:
+				req = Request(web_site, headers=self.headers)
+				doc = urlopen(req, context=self.ctx)
+				self.url = web_site
+			except URLError as error:
+				print ('Unable to retrieve ', error)
+				sys.exit(0)
+		if 'text/html' == doc.info().get_content_type():
+			docBytes = doc.read()
+			return docBytes, self.url
+		else:
+			return '', "None html page"
 
-def crawler (url, word, maxPages):
-	pagesToVisit = [url]
-	numberVisited = 0
-	foundWord = False
-	while numberVisited < maxPages and pagesToVisit != [] and not foundWord:
-		numberVisited += 1
-		url = pagesToVisit[0]
-		pagesToVisit = pagesToVisit [1:]
-		try:
-			print (numberVisited, "Visiting:", url)
-			parser = LinkParser()
-			data, links = parser.getLinks(url)
-			if data.find(word) > -1:
-				foundWord = True
-			pagesToVisit = pagesToVisit + links
-			print ('Success')
-		except:
-			print ('Failed')
-	if foundWord:
-		print ('the word', word, 'was fount at', url)
-	else:
-		print ('word not found')
+	def GetLinks(self, html):
+		soup = BeautifulSoup(html, 'html.parser')
+		tags = soup('a')
+		self.LinksFromBase = []
+		for tag in tags:
+			href = tag.get('href', None)
+			if (href is None): continue
+
+			href = href.strip()
+			up = urlparse(href)
+			if (len(up.scheme)<1):
+				href = urljoin (self.url,href)
+			ipos = href.find('#')
+			if (ipos>1): href = href[:ipos]
+			if (href.endswith('/')): href=href[:-1]
+			if (self.url in href):
+					self.LinksFromBase.append(href)
+		return self.LinksFromBase
