@@ -3,7 +3,6 @@ import sqlite3
 from classes import LinkParser
 #End Libraries
 
-#ssl is anoying, ignore it
 
 
 conn = sqlite3.connect('Crawled.DB')
@@ -43,25 +42,47 @@ if row is None:
 	cur.execute('''INSERT OR IGNORE INTO Websites (url) VALUES (?)''', (BaseUrl,))
 	cur.execute('''SELECT id FROM Websites''')
 	id_website = cur.fetchone()[0]
-	cur.execute('''INSERT OR IGNORE INTO Pages (url, html, new_rank, id_website) VALUES (?, ?, 1.0, ?) ''', (BaseUrl,memoryview(html), id_website))
-else:
+	cur.execute('''INSERT OR IGNORE INTO Pages (url, html, new_rank, id_website, error) VALUES (?, ?, 1.0, ?, 120) ''', (BaseUrl,memoryview(html), id_website))
+else:#You can add the continuation of the crawling here
 	id_website = row[0]
 	print('Restarting existing crawl \n')
 
-# while True:
-links = BaseWeb.GetLinks(html)
-for link in links:
-	print ('Working')
-	WebBranch = LinkParser()
-	html, BranchUrl = WebBranch.CleanUrl(link)
-	cur.execute('''SELECT id FROM Pages WHERE url = ?''', (BaseUrl,))
+i = 0
+while i < 30:
+	links = []
+	print('Getting links from page {}'.format(i))
+	cur.execute('''SELECT html, url FROM Pages WHERE error = 120 ORDER BY RANDOM() LIMIT 1''')
+	row = cur.fetchone()
+	html = row[0]
+	BaseUrl = row[1]
+	print ('{}, {}'.format(len(html), BaseUrl))
+	cur.execute('''UPDATE Pages SET error = 100 WHERE url = ? ''', (BaseUrl,))
+	links = BaseWeb.GetLinks(html)
+	cur.execute('''SELECT id FROM Pages WHERE url = ? ''', (BaseUrl,))
 	from_id = cur.fetchone()[0]
-	if len(html) != -1  and BranchUrl != 'None html page':
-		cur.execute('''INSERT OR IGNORE INTO Pages (url, html, new_rank, id_website) VALUES (?, NULL, 0.-1, ?) ''', (BranchUrl , id_website))
-		cur.execute('''SELECT id FROM Pages WHERE url = ?''', (BranchUrl,))
+	print (links)
+	for link in links:
+		html, BaseUrl = BaseWeb.CleanUrl(link)
+		if BaseUrl == "None html page":
+			print ("Ignored page (not html)")
+			continue
+		elif html is None:
+			cur.execute('''INSERT OR IGNORE INTO Pages (url, error) VALUES (?, 150)''', (BaseUrl,))
+			conn.commit()
+		else:
+			print ("Getting new page")
+			cur.execute('''INSERT OR IGNORE INTO Pages (url, html, new_rank, id_website, error) VALUES (?, ?, 1.0, ?, 120) ''', (BaseUrl, html, id_website))
+			conn.commit()
+
+		cur.execute('''SELECT id FROM Pages WHERE url = ? ''', (BaseUrl,))
 		to_id = cur.fetchone()[0]
-		cur.execute('''INSERT OR IGNORE INTO Links (from_id, to_id) VALUES  (?, ?)''', (from_id, to_id))
-print ('done')
+		if from_id != to_id:
+			cur.execute('''INSERT OR IGNORE INTO Links (from_id, to_id) VALUES (?, ?)''', (from_id, to_id))
+			conn.commit()
+
+	i += 1
+
+
 
 conn.commit()
 cur.close()
