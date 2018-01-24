@@ -46,7 +46,7 @@ class LinkParser:
 			docBytes = doc.read()
 			return docBytes, self.url
 		else:
-			return '', "None html page"
+			return None, "None html page"
 
 	def GetLinks(self, html):
 		soup = BeautifulSoup(html, 'html.parser')
