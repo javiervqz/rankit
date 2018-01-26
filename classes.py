@@ -32,23 +32,23 @@ class LinkParser:
 						doc = urlopen(req, context=self.ctx)
 						self.url = 'http://'+web_site
 					except URLError as error:
-						print('Unable to retrive ', error)
-						sys.exit(0)
+						print('Unable to retrive ', error, web_site)
+						# sys.exit(0)
 		else:
 			try:
 				req = Request(web_site, headers=self.headers)
 				doc = urlopen(req, context=self.ctx)
 				self.url = web_site
 			except URLError as error:
-				print ('Unable to retrieve ', error)
-				sys.exit(0)
+				print ('Unable to retrieve ', error, web_site)
+				# sys.exit(0)
 		if 'text/html' == doc.info().get_content_type():
 			docBytes = doc.read()
 			return docBytes, self.url
 		else:
-			return None, "None html page"
+			return '', "None html page"
 
-	def GetLinks(self, html):
+	def GetLinks(self, html,web_site):
 		soup = BeautifulSoup(html, 'html.parser')
 		tags = soup('a')
 		self.LinksFromBase = []
@@ -63,6 +63,8 @@ class LinkParser:
 			ipos = href.find('#')
 			if (ipos>1): href = href[:ipos]
 			if (href.endswith('/')): href=href[:-1]
-			if (self.url in href):
+			pos = href.find('</a>')
+			if (pos > 1): href = href[:pos]
+			if (web_site in href):
 					self.LinksFromBase.append(href)
 		return self.LinksFromBase
