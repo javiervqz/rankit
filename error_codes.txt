@@ -1,0 +1,4 @@
+Error code: 
+ 100: links fetched, html fine
+ 120: links not fetch, html fine 
+ 150: html null for some reaseon, seems to be an html/txt
