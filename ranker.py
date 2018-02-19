@@ -1,6 +1,6 @@
 import sqlite3
 
-conn = sqlite3.connect('Crawled.db')
+conn = sqlite3.connect('Crawled.DB')
 cur = conn.cursor()
 
 cur.execute('SELECT DISTINCT from_id FROM Links')
@@ -15,9 +15,9 @@ cur.execute('SELECT DISTINCT from_id, to_id FROM Links')
 for row in cur:
 	from_id = row[0]
 	to_id = row[1]
-	if from_id == to_id: continue #zero diagonal
-	if from_id not in from_ids: continue #Lone nodes
-	if to_id not in from_ids: continue #Lone nodes
+	if from_id == to_id: continue
+	if from_id not in from_ids: continue
+	if to_id not in from_ids: continue
 	links.append(row)
 	if to_id not in to_ids:
 		to_ids.append(to_id)
@@ -43,7 +43,7 @@ for i in range(many):
 		total += old_rank
 		next_ranks[node] = 0.0
 
-
+		
 	for (node, old_rank) in list(prev_ranks.items()):
 		give_ids = list()
 		for (from_id, to_id) in links:
