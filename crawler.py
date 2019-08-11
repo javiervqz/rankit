@@ -1,6 +1,6 @@
 #Initialize libraries
 import sqlite3
-from classes import LinkParser
+from webParser import LinkParser
 import sys
 #End Libraries
 
