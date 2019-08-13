@@ -5,6 +5,9 @@ import ssl
 import sys
 from bs4 import BeautifulSoup
 
+
+
+
 class LinkParser:
 	def __init__(self):
 		self.headers = { 'User-Agent':'''
@@ -17,7 +20,6 @@ class LinkParser:
 		self.ctx.check_hostname = False
 		self.ctx.verify_mode=ssl.CERT_NONE
 		self.url = ''
-
 
 	def CleanUrl(self, web_site): # returns html page and usable url
 
@@ -53,7 +55,17 @@ class LinkParser:
 			docBytes = doc.read()
 			return docBytes, self.url
 		else:
-			return '', "None html page"
+			return '', "Not html page"
+
+
+	def unique(self, list1):
+		unique_list = []
+		for x in list1:
+			if x not in unique_list:
+				unique_list.append(x)
+		return unique_list
+
+
 
 	def GetLinks(self, html,web_site):
 		soup = BeautifulSoup(html, 'html.parser')
@@ -74,4 +86,6 @@ class LinkParser:
 			if (pos > 1): href = href[:pos]
 			if (web_site in href):
 					self.LinksFromBase.append(href)
-		return self.LinksFromBase
+
+		LinksFromBase = self.unique(self.LinksFromBase)
+		return LinksFromBase
