@@ -1,6 +1,10 @@
 import sqlite3
 
-conn = sqlite3.connect('Crawled.db')
+
+
+toRank = input('Type DB to Rank:\n')
+
+conn = sqlite3.connect('DataBases/'+toRank)
 cur = conn.cursor()
 
 cur.execute('SELECT DISTINCT from_id FROM Links')
