@@ -2,6 +2,7 @@
 import sqlite3
 from webParser import LinkParser
 import sys
+import time
 #End Libraries
 
 
@@ -33,7 +34,7 @@ to_id INTEGER
 
 #Cleaning input url outputs html and url
 web_site = input('Type website to crawl\n')
-many = int(input('How many?'))
+many = int(input('How many?\n'))
 BaseWeb = LinkParser()
 html, BaseUrl = BaseWeb.CleanUrl(web_site)
 
@@ -55,6 +56,7 @@ else:
 	print('Restarting existing crawl \n')
 
 i = 0
+while_starts = time.time()
 while i < many:
 	print(i, '\n')
 	links = []
@@ -72,16 +74,21 @@ while i < many:
 	cur.execute('''
 				UPDATE Pages SET error = 100 WHERE url = ? ''', (BaseUrl,))
 	links = BaseWeb.GetLinks(html,web_site)
+	#links = unique(links)
+
+
 	cur.execute('''SELECT id FROM Pages WHERE url = ? ''', (BaseUrl,))
 	from_id = cur.fetchone()[0]
 	print ('Links found',len(links))
 	j = 0
+
+	for_starts = time.time()
 	for link in links:
 		try:
 			html, BaseUrl = BaseWeb.CleanUrl(link)
 		except:
 			continue
-		if BaseUrl == "None html page":
+		if BaseUrl == "Not html page":
 			print ("Ignored page (not html)")
 			continue
 		elif html is None:
@@ -103,11 +110,14 @@ while i < many:
 						VALUES (?, ?)''', (from_id, to_id))
 			continue
 		j += 1
-	conn.commit()
+	for_ends = time.time()
+	print ('It took to get links ' + str(for_ends - for_starts)+ 's\n')
+#	conn.commit()
 
 	i += 1
+while_ends = time.time()
+print ('It took to find finish the program ' + str(while_ends - while_starts)+ 's\n')
 
 
-
-# conn.commit()
+conn.commit()
 cur.close()
