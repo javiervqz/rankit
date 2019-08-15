@@ -58,7 +58,7 @@ else:
 i = 0
 while_starts = time.time()
 while i < many:
-	print(i, '\n')
+	print(i + 1, '\n')
 	links = []
 	cur.execute('''
 				SELECT html, url FROM Pages WHERE error = 120
@@ -85,31 +85,36 @@ while i < many:
 	for_starts = time.time()
 	for link in links:
 		try:
-			html, BaseUrl = BaseWeb.CleanUrl(link)
-		except:
-			continue
-		if BaseUrl == "Not html page":
-			print ("Ignored page (not html)")
-			continue
-		elif html is None:
-			cur.execute('''
-						INSERT OR IGNORE INTO Pages (url, error)
-						VALUES (?, 150)''', (BaseUrl,))
-		else:
-			cur.execute('''
-						INSERT OR IGNORE INTO
-						Pages (url, html, new_rank, id_website, error)
-						VALUES (?, ?, 1.0, ?, 120)
-						''', (BaseUrl, html, id_website))
+			try:
+				html, BaseUrl = BaseWeb.CleanUrl(link)
+			except:
+				continue
+			if BaseUrl == "Not html page":
+				print ("Ignored page (not html)")
+				continue
+			elif html is None:
+				cur.execute('''
+							INSERT OR IGNORE INTO Pages (url, error)
+							VALUES (?, 150)''', (BaseUrl,))
+			else:
+				cur.execute('''
+							INSERT OR IGNORE INTO
+							Pages (url, html, new_rank, id_website, error)
+							VALUES (?, ?, 1.0, ?, 120)
+							''', (BaseUrl, html, id_website))
 
-		cur.execute('''SELECT id FROM Pages WHERE url = ? ''', (BaseUrl,))
-		to_id = cur.fetchone()[0]
-		if from_id != to_id:
-			cur.execute('''
-						INSERT INTO Links (from_id, to_id)
-						VALUES (?, ?)''', (from_id, to_id))
-			continue
-		j += 1
+			cur.execute('''SELECT id FROM Pages WHERE url = ? ''', (BaseUrl,))
+			to_id = cur.fetchone()[0]
+			if from_id != to_id:
+				cur.execute('''
+							INSERT INTO Links (from_id, to_id)
+							VALUES (?, ?)''', (from_id, to_id))
+				continue
+			j += 1
+		except KeyboardInterrupt:
+			print ('Program Interrupted')
+			break
+
 	for_ends = time.time()
 	print ('It took to get links ' + str(for_ends - for_starts)+ 's\n')
 #	conn.commit()

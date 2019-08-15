@@ -5,7 +5,7 @@ cur = conn.cursor()
 
 cur.execute('SELECT id FROM Pages')
 no_pages = len(cur.fetchall())
-start = 100.0/no_pages
+start = 1.0
 
 cur.execute('UPDATE Pages SET new_rank = ? ', (start,))
 
