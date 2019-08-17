@@ -6,3 +6,28 @@ Besides learing about web crawling and the algorithm that created the internet a
 
 
 [FCurl]: <https://github.com/javiervqz/Fing_crawler>
+
+## Error Codes in db Pages
+ 100: links fetched, html fine
+ 120: links not fetch, html fine 
+ 150: html null for some reaseon, seems to be an html/txt
+
+## DataBase Schema
+REATE TABLE Pages(
+id INTEGER PRIMARY KEY,
+url TEXT UNIQUE,
+html TEXT,
+error INTEGER,
+old_rank REAL,
+new_rank REAL,
+id_website INTEGER
+);
+CREATE TABLE Websites(
+id INTEGER PRIMARY KEY,
+url TEXT UNIQUE
+);
+CREATE TABLE Links(
+from_id INTEGER,
+to_id INTEGER
+);
+
