@@ -29,7 +29,7 @@ class LinkParser:
     def __init__(self,web_site):
         self.web_site = web_site
 
-    @time_it
+    #@time_it
     def _cleanUrl(self): 
         '''
         Cleans the url given by the user and provides the landing page of the url
@@ -81,7 +81,7 @@ class LinkParser:
             pos = href.find('</a>')
             if (pos > 1): href = href[:pos]
             if (web_site in href):
-                    links_from_base.add(href)
+                links_from_base.add(href)
 
         links_from_base = list(links_from_base)
         return links_from_base, html, web_site
