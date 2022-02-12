@@ -66,15 +66,11 @@ class LinkParser:
 
 
 
-    def getLinks(self):
-        '''
-        Cleans input url and returns html from such url if valid and all links (href) cointain within the html of given url
-        returns tuple (links_from_base, html, web_site):
-        '''
-        html, web_site = self._cleanUrl()
+    def GetLinks(self):
+        html,web_site = self._cleanUrl()
         soup = BeautifulSoup(html, 'html.parser')
         tags = soup('a')
-        links_from_base = set()
+        LinksFromBase = set()
         for tag in tags:
             href = tag.get('href', None)
             if (href is None): continue
@@ -89,7 +85,7 @@ class LinkParser:
             pos = href.find('</a>')
             if (pos > 1): href = href[:pos]
             if (web_site in href):
-                    links_from_base.add(href)
+                    LinksFromBase.add(href)
 
-        links_from_base = list(links_from_base)
-        return links_from_base, html, web_site
+        LinksFromBase = list(LinksFromBase)
+        return LinksFromBase
