@@ -1,13 +1,22 @@
 from sqlite3 import connect
+from os import lstat
 from webParser import LinkParser, time_it
 
 class CrawlService:
-    def __init__(self,table_name):
+    def __init__(self,table_name,path='.'):
         self.table_name=table_name
+        self.path = path
+        self.db_path = '/'.join([self.path,self.table_name])
 
-    def _initializeDB(self, path=''):
-        #table_path = ''.join([path,self.table_name])
-        with connect(self.table_name) as sqlConn:
+    def _initializeDB(self):
+        try:
+            lstat(self.path)
+        except FileNotFoundError:
+            print(f'Directoy not found for {self.db_path}, leave path blank or create directory')
+            exit(69)
+
+        with connect(self.db_path) as sqlConn:
+
             cur = sqlConn.cursor()
             cur.executescript('''
                 CREATE TABLE IF NOT EXISTS Pages(
@@ -32,19 +41,22 @@ class CrawlService:
                 )
             '''
             )
+
     @time_it
-    def start_crawl(self, web_site):
-       main_crawl = LinkParser(web_site) 
-       links, html, url = main_crawl.getLinks()
-       self._initializeDB()
-       with connect(self.table_name) as sqlConn:
+    def crawling(self, web_site):
+        main_crawl = LinkParser(web_site) 
+        links, html, url = main_crawl.getLinks()
+        with connect(self.db_path) as sqlConn:
            cur = sqlConn.cursor()
+
            cur.execute('''
                    INSERT OR IGNORE INTO Websites (url) VALUES (?)
                    ''',
                 (url,)
                 )
-           cur.execute(''' SELECT id FROM Websites''')
+           cur.execute(''' SELECT id FROM Websites WHERE url = ?''',
+                (url,))
+
            id_website = cur.fetchone()[0]
            cur.execute('''
                 INSERT OR IGNORE INTO Pages 
@@ -61,6 +73,22 @@ class CrawlService:
                     ''',
                     (link,id_website)
                     )
+
+##               cur.execute('''
+##                    SELECT ID FROM Pages WHERE url = ? ''',
+##                    (web_site,))
+##               to_id = cur.fetchone()[0]
+
+
+    def start_crawl(self, web_site):
+        try:
+           lstat(self.db_path)
+           print('TODO')
+
+        except FileNotFoundError:
+            self._initializeDB()
+            print(f'{self.db_path} initialized correctly')
+            self.crawling(web_site)
 
 
 
